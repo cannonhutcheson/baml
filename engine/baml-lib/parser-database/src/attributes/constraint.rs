@@ -21,7 +21,15 @@ pub fn attribute_as_constraint(
         .collect();
 
     let level = match attribute_name.as_str() {
-        "assert" => ConstraintLevel::Assert,
+        "assert" if attribute_name.starts_with("@@") => ConstraintLevel::Assert,
+        "assert" => {
+            datamodel_errors.push(DatamodelError::new_attribute_validation_error(
+                "`@assert` is invalid. Use `@@assert` instead.",
+                attribute_name.as_str(),
+                span.clone(),
+            ));
+            return (None, vec![]);
+        }
         "check" => ConstraintLevel::Check,
         _ => {
             return (None, datamodel_errors);
@@ -78,7 +86,15 @@ pub(super) fn visit_constraint_attributes(
         .collect();
 
     let level = match attribute_name.as_str() {
-        "assert" => ConstraintLevel::Assert,
+        "assert" if attribute_name.starts_with("@@") => ConstraintLevel::Assert,
+        "assert" => {
+        ctx.push_error(DatamodelError::new_attribute_validation_error(
+            "`@assert` is invalid. Use `@@assert` instead.",
+            attribute_name.as_str(),
+            span,
+        ));
+        return;
+    }
         "check" => ConstraintLevel::Check,
         other_name => {
             ctx.push_error(DatamodelError::new_attribute_validation_error(
